@@ -8,6 +8,7 @@ import (
 
 	"github.com/IanWill2k16/blog_aggregator/internal/config"
 	"github.com/IanWill2k16/blog_aggregator/internal/database"
+	"github.com/IanWill2k16/blog_aggregator/internal/rss"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
@@ -71,6 +72,61 @@ func GetUsers(s *config.State, cmd Command) error {
 			name += " (current)"
 		}
 		fmt.Printf("* %v\n", name)
+	}
+	return nil
+}
+
+func Agg(s *config.State, cmd Command) error {
+	url := "https://www.wagslane.dev/index.xml"
+	res, err := rss.FetchFeed(context.Background(), url)
+	if err != nil {
+		return err
+	}
+	fmt.Println(res)
+	return nil
+}
+
+func AddFeed(s *config.State, cmd Command) error {
+	if len(cmd.Args) < 2 {
+		return fmt.Errorf("missing arguments: addfeed <name> <url>")
+	}
+	user, err := s.Db.GetUser(context.Background(), s.Cfg.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("user_id not found")
+	}
+
+	args := database.CreateFeedParams{
+		Name:   cmd.Args[0],
+		Url:    cmd.Args[1],
+		UserID: user.ID,
+	}
+	feedEntry, err := s.Db.CreateFeed(context.Background(), args)
+	if err != nil {
+		return err
+	}
+	fmt.Println(feedEntry)
+
+	return nil
+}
+
+func Feeds(s *config.State, cmd Command) error {
+	ctx := context.Background()
+	feeds, err := s.Db.GetFeeds(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Println("------------------")
+	for i := range feeds {
+		user_name, err := s.Db.GetNameByID(ctx, feeds[i].UserID)
+		if err != nil {
+			return err
+		}
+		fmt.Println("")
+		fmt.Println(feeds[i].Name)
+		fmt.Println(feeds[i].Url)
+		fmt.Println(user_name)
+		fmt.Println("")
+		fmt.Println("------------------")
 	}
 	return nil
 }
