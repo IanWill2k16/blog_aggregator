@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/IanWill2k16/blog_aggregator/internal/database"
 )
 
 const configFileName = ".gatorconfig.json"
@@ -11,6 +13,11 @@ const configFileName = ".gatorconfig.json"
 type Config struct {
 	DBUrl           string `json:"db_url"`
 	CurrentUserName string `json:"current_user_name"`
+}
+
+type State struct {
+	Db  *database.Queries
+	Cfg *Config
 }
 
 func Read() (Config, error) {
