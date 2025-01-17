@@ -87,21 +87,32 @@ func Agg(s *config.State, cmd Command) error {
 }
 
 func AddFeed(s *config.State, cmd Command) error {
+	ctx := context.Background()
 	if len(cmd.Args) < 2 {
 		return fmt.Errorf("missing arguments: addfeed <name> <url>")
 	}
-	user, err := s.Db.GetUser(context.Background(), s.Cfg.CurrentUserName)
+	user, err := s.Db.GetUser(ctx, s.Cfg.CurrentUserName)
 	if err != nil {
 		return fmt.Errorf("user_id not found")
 	}
 
+	url := cmd.Args[1]
+
 	args := database.CreateFeedParams{
+		ID:     uuid.New(),
 		Name:   cmd.Args[0],
-		Url:    cmd.Args[1],
+		Url:    url,
 		UserID: user.ID,
 	}
-	feedEntry, err := s.Db.CreateFeed(context.Background(), args)
+	feedEntry, err := s.Db.CreateFeed(ctx, args)
 	if err != nil {
+		return err
+	}
+	followCmd := &Command{
+		Args: []string{url},
+	}
+
+	if err := Follow(s, *followCmd); err != nil {
 		return err
 	}
 	fmt.Println(feedEntry)
@@ -117,16 +128,65 @@ func Feeds(s *config.State, cmd Command) error {
 	}
 	fmt.Println("------------------")
 	for i := range feeds {
-		user_name, err := s.Db.GetNameByID(ctx, feeds[i].UserID)
+		userName, err := s.Db.GetNameByID(ctx, feeds[i].UserID)
 		if err != nil {
 			return err
 		}
 		fmt.Println("")
 		fmt.Println(feeds[i].Name)
 		fmt.Println(feeds[i].Url)
-		fmt.Println(user_name)
+		fmt.Println(userName)
 		fmt.Println("")
 		fmt.Println("------------------")
+	}
+	return nil
+}
+
+func Follow(s *config.State, cmd Command) error {
+	ctx := context.Background()
+	if len(cmd.Args) == 0 {
+		return fmt.Errorf("missing argument: follow <url>")
+	}
+	feed, err := s.Db.GetFeedFromURL(ctx, cmd.Args[0])
+	if err != nil {
+		return err
+	}
+	user, err := s.Db.GetUser(ctx, s.Cfg.CurrentUserName)
+	if err != nil {
+		return err
+	}
+
+	args := database.CreateFeedFollowsParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	}
+
+	res, err := s.Db.CreateFeedFollows(ctx, args)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(res)
+
+	return nil
+}
+
+func Following(s *config.State, cmd Command) error {
+	ctx := context.Background()
+	user, err := s.Db.GetUser(ctx, s.Cfg.CurrentUserName)
+	if err != nil {
+		return err
+	}
+	res, err := s.Db.GetFeedFollowsForUser(ctx, user.ID)
+	if err != nil {
+		return err
+	}
+
+	for i := range res {
+		fmt.Println(res[i].FeedName)
 	}
 	return nil
 }

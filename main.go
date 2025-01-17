@@ -40,6 +40,8 @@ func main() {
 	commands.Register("agg", command.Agg)
 	commands.Register("addfeed", command.AddFeed)
 	commands.Register("feeds", command.Feeds)
+	commands.Register("follow", command.Follow)
+	commands.Register("following", command.Following)
 
 	if len(os.Args) < 2 {
 		fmt.Println("at least one argument required")
