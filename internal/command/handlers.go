@@ -13,6 +13,17 @@ import (
 	"github.com/lib/pq"
 )
 
+func MiddlewareLoggedIn(handler func(s *config.State, cmd Command, user database.User) error) func(*config.State, Command) error {
+	return func(s *config.State, cmd Command) error {
+		user, err := s.Db.GetUser(context.Background(), s.Cfg.CurrentUserName)
+		if err != nil {
+			fmt.Println("user does not exist")
+			os.Exit(1)
+		}
+		return handler(s, cmd, user)
+	}
+}
+
 func HandlerLogin(s *config.State, cmd Command) error {
 	if len(cmd.Args) == 0 {
 		return fmt.Errorf("username required: login <username>")
@@ -86,14 +97,10 @@ func Agg(s *config.State, cmd Command) error {
 	return nil
 }
 
-func AddFeed(s *config.State, cmd Command) error {
+func AddFeed(s *config.State, cmd Command, user database.User) error {
 	ctx := context.Background()
 	if len(cmd.Args) < 2 {
 		return fmt.Errorf("missing arguments: addfeed <name> <url>")
-	}
-	user, err := s.Db.GetUser(ctx, s.Cfg.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf("user_id not found")
 	}
 
 	url := cmd.Args[1]
@@ -112,7 +119,7 @@ func AddFeed(s *config.State, cmd Command) error {
 		Args: []string{url},
 	}
 
-	if err := Follow(s, *followCmd); err != nil {
+	if err := Follow(s, *followCmd, user); err != nil {
 		return err
 	}
 	fmt.Println(feedEntry)
@@ -142,16 +149,12 @@ func Feeds(s *config.State, cmd Command) error {
 	return nil
 }
 
-func Follow(s *config.State, cmd Command) error {
+func Follow(s *config.State, cmd Command, user database.User) error {
 	ctx := context.Background()
 	if len(cmd.Args) == 0 {
 		return fmt.Errorf("missing argument: follow <url>")
 	}
 	feed, err := s.Db.GetFeedFromURL(ctx, cmd.Args[0])
-	if err != nil {
-		return err
-	}
-	user, err := s.Db.GetUser(ctx, s.Cfg.CurrentUserName)
 	if err != nil {
 		return err
 	}
@@ -174,12 +177,8 @@ func Follow(s *config.State, cmd Command) error {
 	return nil
 }
 
-func Following(s *config.State, cmd Command) error {
+func Following(s *config.State, cmd Command, user database.User) error {
 	ctx := context.Background()
-	user, err := s.Db.GetUser(ctx, s.Cfg.CurrentUserName)
-	if err != nil {
-		return err
-	}
 	res, err := s.Db.GetFeedFollowsForUser(ctx, user.ID)
 	if err != nil {
 		return err

@@ -38,10 +38,10 @@ func main() {
 	commands.Register("reset", command.Reset)
 	commands.Register("users", command.GetUsers)
 	commands.Register("agg", command.Agg)
-	commands.Register("addfeed", command.AddFeed)
+	commands.Register("addfeed", command.MiddlewareLoggedIn(command.AddFeed))
 	commands.Register("feeds", command.Feeds)
-	commands.Register("follow", command.Follow)
-	commands.Register("following", command.Following)
+	commands.Register("follow", command.MiddlewareLoggedIn(command.Follow))
+	commands.Register("following", command.MiddlewareLoggedIn(command.Following))
 
 	if len(os.Args) < 2 {
 		fmt.Println("at least one argument required")
