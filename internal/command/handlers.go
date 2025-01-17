@@ -4,11 +4,11 @@ import (
 	"fmt"
 )
 
-func handlerLogin(s *State, cmd command) error {
-	if len(cmd.args) == 0 {
+func HandlerLogin(s *State, cmd Command) error {
+	if len(cmd.Args) == 0 {
 		return fmt.Errorf("username required: login <username>")
 	}
-	s.cfg.SetUser(cmd.args[0])
+	s.Cfg.SetUser(cmd.Args[0])
 	fmt.Println("user has been set")
 	return nil
 }

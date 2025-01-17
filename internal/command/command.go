@@ -6,25 +6,25 @@ import (
 	"github.com/IanWill2k16/blog_aggregator/internal/config"
 )
 
-type command struct {
-	name string
-	args []string
+type Command struct {
+	Name string
+	Args []string
 }
 
 type Commands struct {
-	commandMap map[string]func(*State, command) error
+	CommandMap map[string]func(*State, Command) error
 }
 
 type State struct {
-	cfg *config.Config
+	Cfg *config.Config
 }
 
-func (c *Commands) register(name string, f func(*State, command) error) {
-	c.commandMap[name] = f
+func (c *Commands) Register(name string, f func(*State, Command) error) {
+	c.CommandMap[name] = f
 }
 
-func (c *Commands) run(s *State, cmd command) error {
-	handler, ok := c.commandMap[cmd.name]
+func (c *Commands) Run(s *State, cmd Command) error {
+	handler, ok := c.CommandMap[cmd.Name]
 	if !ok {
 		return fmt.Errorf("command not found")
 	}
