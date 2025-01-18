@@ -8,7 +8,6 @@ import (
 
 	"github.com/IanWill2k16/blog_aggregator/internal/config"
 	"github.com/IanWill2k16/blog_aggregator/internal/database"
-	"github.com/IanWill2k16/blog_aggregator/internal/rss"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
@@ -88,13 +87,20 @@ func GetUsers(s *config.State, cmd Command) error {
 }
 
 func Agg(s *config.State, cmd Command) error {
-	url := "https://www.wagslane.dev/index.xml"
-	res, err := rss.FetchFeed(context.Background(), url)
+	if len(cmd.Args) == 0 {
+		return fmt.Errorf("missing variable: agg <time_between_reqs>")
+	}
+	timeBetweenRequests, err := time.ParseDuration(cmd.Args[0])
 	if err != nil {
 		return err
 	}
-	fmt.Println(res)
-	return nil
+
+	fmt.Printf("Collecting feeds every %v\n", timeBetweenRequests)
+
+	ticker := time.NewTicker(timeBetweenRequests)
+	for ; ; <-ticker.C {
+		scrapeFeeds(s)
+	}
 }
 
 func AddFeed(s *config.State, cmd Command, user database.User) error {
