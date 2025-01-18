@@ -189,3 +189,21 @@ func Following(s *config.State, cmd Command, user database.User) error {
 	}
 	return nil
 }
+
+func Unfollow(s *config.State, cmd Command, user database.User) error {
+	if len(cmd.Args) == 0 {
+		return fmt.Errorf("missing argument: unfollow <url>")
+	}
+
+	args := database.RemoveFeedFollowParams{
+		Url:    cmd.Args[0],
+		UserID: user.ID,
+	}
+
+	err := s.Db.RemoveFeedFollow(context.Background(), args)
+	if err != nil {
+		return err
+	}
+	fmt.Println("unfollowed")
+	return nil
+}

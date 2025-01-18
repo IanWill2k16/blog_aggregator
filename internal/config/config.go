@@ -28,7 +28,7 @@ func Read() (Config, error) {
 
 	data, err := os.ReadFile(user_dir)
 	if err != nil {
-		return Config{}, fmt.Errorf("error reading config file: %w", err)
+		return Config{}, err
 	}
 
 	config := Config{}

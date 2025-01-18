@@ -13,7 +13,6 @@ import (
 
 func main() {
 	state := config.State{}
-
 	cfg, err := config.Read()
 	if err != nil {
 		fmt.Println(err)
@@ -42,6 +41,7 @@ func main() {
 	commands.Register("feeds", command.Feeds)
 	commands.Register("follow", command.MiddlewareLoggedIn(command.Follow))
 	commands.Register("following", command.MiddlewareLoggedIn(command.Following))
+	commands.Register("unfollow", command.MiddlewareLoggedIn(command.Unfollow))
 
 	if len(os.Args) < 2 {
 		fmt.Println("at least one argument required")
