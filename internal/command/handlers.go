@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/IanWill2k16/blog_aggregator/internal/config"
@@ -211,5 +212,37 @@ func Unfollow(s *config.State, cmd Command, user database.User) error {
 		return err
 	}
 	fmt.Println("unfollowed")
+	return nil
+}
+
+func Browse(s *config.State, cmd Command, user database.User) error {
+	ctx := context.Background()
+	var limit int
+	if len(cmd.Args) > 0 {
+		parsedLimit, err := strconv.Atoi(cmd.Args[0])
+		if err != nil {
+			return fmt.Errorf("invalid limit value: %v", err)
+		}
+		limit = parsedLimit
+	} else {
+		limit = 2
+	}
+
+	args := database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  int32(limit),
+	}
+
+	posts, err := s.Db.GetPostsForUser(ctx, args)
+	if err != nil {
+		return fmt.Errorf("error gettting posts from database: %v", err)
+	}
+	for i := range posts {
+		fmt.Println(posts[i].Title)
+		fmt.Println(posts[i].PublishedAt.Time)
+		fmt.Println(posts[i].Description.String)
+		fmt.Println()
+	}
+
 	return nil
 }
